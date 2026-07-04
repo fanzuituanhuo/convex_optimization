@@ -1,0 +1,667 @@
+% !TEX program = xelatex
+% ============================================================
+%  第 4 章 Convex Optimization — 基于模板的结构化笔记
+% ============================================================
+
+\documentclass[11pt,a4paper]{article}
+
+% ------------------------------------------------------------
+%  字体与页面
+% ------------------------------------------------------------
+\IfFileExists{geometry.sty}{%
+  \usepackage[margin=2.5cm]{geometry}
+}{%
+  \PackageWarning{geometry}{未找到 geometry 宏包，已使用默认 A4 页边距。}%
+}
+\usepackage{ctex}
+\usepackage{microtype}
+\linespread{1.08}
+
+% ------------------------------------------------------------
+%  工具宏包
+% ------------------------------------------------------------
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{mathtools}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage[dvipsnames]{xcolor}
+\usepackage[most]{tcolorbox}
+\usepackage{titlesec}
+\setlength{\parskip}{0.35em}
+\setlength{\parindent}{2em}
+\setlist[itemize]{itemsep=0.2em, topsep=0.25em}
+\setlist[enumerate]{itemsep=0.2em, topsep=0.25em}
+
+% ------------------------------------------------------------
+%  超链接
+% ------------------------------------------------------------
+\definecolor{mydarkblue}{rgb}{0.0,0.08,0.45}
+\usepackage{hyperref}
+\hypersetup{
+  colorlinks = true,
+  linkcolor  = mydarkblue,
+  citecolor  = mydarkblue,
+  urlcolor   = mydarkblue
+}
+
+% ------------------------------------------------------------
+%  章节样式
+% ------------------------------------------------------------
+\titleformat{\section}
+  {\large\bfseries\color{mydarkblue}}{\thesection}{0.5em}{}[\titlerule]
+\titlespacing*{\section}{0pt}{1.5ex}{1ex}
+\titleformat{\subsection}
+  {\normalsize\bfseries}{\thesubsection}{0.5em}{}
+\titlespacing*{\subsection}{0pt}{1ex}{0.5ex}
+
+% ------------------------------------------------------------
+%  顶栏 + 横向导航
+% ------------------------------------------------------------
+\makeatletter
+\newcommand{\makeChapterFourTitle}{%
+  \begin{tcolorbox}[
+    colback=mydarkblue!5, colframe=mydarkblue!10,
+    arc=3pt, boxrule=0.5pt,
+    left=5pt, right=5pt, top=5pt, bottom=5pt
+  ]
+    {\large\bfseries\@title}\hfill{\small\@author}\\[-2pt]
+    {\tiny\color{gray}\@date\hfill Chapter 4 · Convex optimization notes}
+  \end{tcolorbox}
+  \vspace{-0.6em}
+}
+\makeatother
+
+\newtcolorbox{tabNavBoxSmall}[1][]{
+  enhanced,
+  colframe=white, colback=gray!5, coltext=black!80,
+  fontupper=\sffamily\small\bfseries,
+  arc=1.5mm, boxrule=0pt, bottomrule=2pt,
+  left=2mm, right=2mm, top=1.5mm, bottom=1.5mm,
+  #1
+}
+
+\newcommand{\horizontalTOCChFour}{%
+  \begin{center}
+  \begin{tcbraster}[
+    raster columns=3, raster width=\linewidth,
+    raster column skip=1mm, raster equal height
+  ]
+    \begin{tabNavBoxSmall}
+      \hyperref[sec:ch4-basic-form]{\ 基本形式与定义}
+    \end{tabNavBoxSmall}
+    \begin{tabNavBoxSmall}
+      \hyperref[sec:ch4-feasibility]{\ 可行性与最优性}
+    \end{tabNavBoxSmall}
+    \begin{tabNavBoxSmall}
+      \hyperref[sec:ch4-transform]{\ 等价转化}
+    \end{tabNavBoxSmall}
+  \end{tcbraster}
+  \vspace{-2.5pt}%
+  \noindent\textcolor{gray!30}{\rule{\linewidth}{1pt}}
+  \end{center}
+  \vspace{1.2em}
+}
+
+% ------------------------------------------------------------
+%  定理环境
+% ------------------------------------------------------------
+\tcbset{
+  mytheo/.style={
+    enhanced, breakable,
+    colback=#1!5!white, colframe=#1!70!black,
+    coltitle=white, fonttitle=\bfseries\small,
+    boxrule=0.6pt, arc=3pt,
+    left=5pt, right=5pt, top=10pt, bottom=5pt,
+    attach boxed title to top left={yshift*=-\tcboxedtitleheight/2, xshift=2mm},
+    boxed title style={
+      colback=#1!80!black, colframe=#1!80!black,
+      boxrule=0pt, arc=2pt
+    }
+  }
+}
+\newtcbtheorem[auto counter]            {theorem}    {定理}{mytheo=WildStrawberry}{thm}
+\newtcbtheorem[use counter from=theorem]{definition} {定义}{mytheo=NavyBlue}{def}
+\newtcbtheorem[use counter from=theorem]{example}    {例子}{mytheo=YellowOrange}{ex}
+\newtcbtheorem[use counter from=theorem]{remark}     {注解}{mytheo=Periwinkle}{rem}
+
+\title{第 4 章\quad Convex Optimization 笔记}
+\author{手写笔记转 LaTeX（模板化整理）}
+\date{\today}
+
+\begin{document}
+
+\makeChapterFourTitle
+\horizontalTOCChFour
+\begin{center}
+  \includegraphics[width=\linewidth]{\detokenize{ChatGPT Image 2026年4月27日 19_35_30.png}}
+\end{center}
+\vspace{0.5em}
+
+\section{基本形式与定义}\label{sec:ch4-basic-form}
+
+\begin{definition}{一般优化问题}{general-opt}
+一般优化问题可写为
+\[
+\begin{aligned}
+\text{minimize}\quad & f_0(x) \\
+\text{subject to}\quad & f_i(x)\le 0,\quad i=1,\dots,m,\\
+& h_j(x)=0,\quad j=1,\dots,p.
+\end{aligned}
+\]
+其中 $x\in\mathbb{R}^n$，$f_0$ 为目标函数，$f_i$ 为不等式约束函数，$h_j$ 为等式约束函数。
+\end{definition}
+
+\begin{definition}{问题域与可行集}{domain-feasible}
+问题的定义域记为
+\[
+D=\bigcap_{i=0}^m \operatorname{dom} f_i \;\cap\; \bigcap_{j=1}^p \operatorname{dom} h_j.
+\]
+若 $x\in D$ 且满足
+\[
+f_i(x)\le 0\;(i=1,\dots,m),\qquad h_j(x)=0\;(j=1,\dots,p),
+\]
+则称 $x$ 为可行点。所有可行点构成可行集
+\[
+\mathcal X_f=\{x\in D\mid f_i(x)\le0,\ h_j(x)=0\}.
+\]
+\end{definition}
+
+\section{可行性与最优性}\label{sec:ch4-feasibility}
+
+\begin{definition}{最优值与最优解集}{optimal-value-solution}
+最优值定义为
+\[
+p^\star=\inf\{f_0(x)\mid x\in\mathcal X_f\}.
+\]
+若 $\mathcal X_f=\varnothing$，则约定 $p^\star=+\infty$。若可行点 $x^\star$ 满足 $f_0(x^\star)=p^\star$，则称 $x^\star$ 为最优解。最优解集记为
+\[
+\mathcal X_{\mathrm{opt}}
+=\{x\in\mathcal X_f\mid f_0(x)=p^\star\}.
+\]
+\end{definition}
+
+\begin{definition}{$\varepsilon$-次优解集}{$\varepsilon$-suboptimal}
+给定 $\varepsilon\ge0$，$\varepsilon$-次优解集定义为
+\[
+\mathcal X_\varepsilon
+=\{x\in\mathcal X_f\mid f_0(x)\le p^\star+\varepsilon\}.
+\]
+当 $\varepsilon=0$ 时，$\mathcal X_\varepsilon=\mathcal X_{\mathrm{opt}}$。
+\end{definition}
+
+\begin{definition}{局部最优解}{local-opt}
+可行点 $x$ 称为局部最优解，若存在 $R>0$ 使得
+\[
+f_0(x)=\inf\Bigl\{f_0(z)\,\Bigm|\,z\in\mathcal X_f,\ \|z-x\|_2\le R\Bigr\}.
+\]
+\end{definition}
+
+\begin{definition}{可行性问题}{feasibility-problem}
+可行性问题只关心约束是否可满足：
+\[
+\begin{aligned}
+\text{find}\quad & x\\
+\text{subject to}\quad & f_i(x)\le0,\quad i=1,\dots,m,\\
+& h_j(x)=0,\quad j=1,\dots,p.
+\end{aligned}
+\]
+\end{definition}
+
+\section{等价转化方式}\label{sec:ch4-transform}
+
+\subsection{Box constraints 的标准化}
+\begin{example}{区间约束到不等式约束}{box-constraints}
+问题
+\[
+\begin{aligned}
+\text{minimize}\quad & f_0(x)\\
+\text{subject to}\quad & l_i\le x_i\le u_i,\quad i=1,\dots,n
+\end{aligned}
+\]
+可等价写为
+\[
+\begin{aligned}
+\text{minimize}\quad & f_0(x)\\
+\text{subject to}\quad & l_i-x_i\le0,\quad i=1,\dots,n,\\
+& x_i-u_i\le0,\quad i=1,\dots,n.
+\end{aligned}
+\]
+\end{example}
+
+\subsection{变量代换（change of variables）}
+\begin{definition}{通过一一映射重参数化}{change-of-variables}
+设 $\phi:\mathbb R^n\to\mathbb R^n$ 在其定义域上为一一映射，且 $\phi(\operatorname{dom}\phi)\supseteq D$。令
+\[
+\tilde f_i(z)=f_i(\phi(z)),\quad i=0,1,\dots,m,\qquad
+\tilde h_j(z)=h_j(\phi(z)),\quad j=1,\dots,p.
+\]
+则原问题可等价写为
+\[
+\begin{aligned}
+\text{minimize}\quad & \tilde f_0(z)\\
+\text{subject to}\quad & \tilde f_i(z)\le0,\quad i=1,\dots,m,\\
+& \tilde h_j(z)=0,\quad j=1,\dots,p.
+\end{aligned}
+\]
+\end{definition}
+
+\subsection{单调函数复合变换}
+\begin{definition}{目标与约束的等价复合}{monotone-transform}
+设 $\psi_0:\mathbb R\to\mathbb R$ 为单调递增函数；对 $i=1,\dots,m$，$\psi_i:\mathbb R\to\mathbb R$ 满足
+\[
+\psi_i(u)\le0\iff u\le0;
+\]
+对 $j=1,\dots,p$，$\varphi_j:\mathbb R\to\mathbb R$ 满足
+\[
+\varphi_j(u)=0\iff u=0.
+\]
+定义
+\[
+\tilde f_0(x)=\psi_0(f_0(x)),\quad
+\tilde f_i(x)=\psi_i(f_i(x)),\ i=1,\dots,m,\quad
+\tilde h_j(x)=\varphi_j(h_j(x)),\ j=1,\dots,p.
+\]
+则等价问题为
+\[
+\begin{aligned}
+\text{minimize}\quad & \tilde f_0(x)\\
+\text{subject to}\quad & \tilde f_i(x)\le0,\quad i=1,\dots,m,\\
+& \tilde h_j(x)=0,\quad j=1,\dots,p.
+\end{aligned}
+\]
+\end{definition}
+
+\subsection{松弛变量（slack variables）}
+\begin{definition}{不等式到等式的松弛化}{slack-variable}
+原问题
+\[
+\begin{aligned}
+\text{minimize}\quad & f_0(x)\\
+\text{subject to}\quad & f_i(x)\le0,\quad i=1,\dots,m,\\
+& h_j(x)=0,\quad j=1,\dots,p
+\end{aligned}
+\]
+可等价写为
+\[
+\begin{aligned}
+\text{minimize}\quad & f_0(x)\\
+\text{subject to}\quad & s_i\ge0,\quad i=1,\dots,m,\\
+& f_i(x)+s_i=0,\quad i=1,\dots,m,\\
+& h_j(x)=0,\quad j=1,\dots,p.
+\end{aligned}
+\]
+其中 $s=(s_1,\dots,s_m)$ 为松弛变量。
+\end{definition}
+
+\subsection{对部分变量先优化（partial minimization）}
+\begin{definition}{先对部分变量取下确界}{optimizing-over-some-variables}
+对二元函数 $f(x,y)$，定义
+\[
+\tilde f(x)=\inf_y f(x,y),
+\]
+则总有
+\[
+\inf_{x,y} f(x,y)=\inf_x \tilde f(x).
+\]
+\end{definition}
+
+\begin{example}{分块变量下的等价化简}{partial-min-example}
+设 $x=\begin{pmatrix}x_1\\x_2\end{pmatrix}$，$x_1\in\mathbb R^{n_1}$，$x_2\in\mathbb R^{n_2}$。考虑
+\[
+\begin{aligned}
+\text{minimize}\quad & f_0(x_1,x_2)\\
+\text{subject to}\quad & f_i(x_1,x_2)\le0,\quad i=1,\dots,m_1,\\
+& \hat f_j(x_2)\le0,\quad j=1,\dots,m_2.
+\end{aligned}
+\]
+定义可行集合
+\[
+\hat{\mathcal Z}=\{z\in\mathbb R^{n_2}\mid \hat f_j(z)\le0,\ j=1,\dots,m_2\},
+\]
+并令
+\[
+\tilde f_0(x_1)=\inf_{z\in\hat{\mathcal Z}} f_0(x_1,z),\qquad
+\tilde f_i(x_1)=\inf_{z\in\hat{\mathcal Z}} f_i(x_1,z),\ i=1,\dots,m_1.
+\]
+则可得到仅关于 $x_1$ 的等价（或更紧）表述：
+\[
+\begin{aligned}
+\text{minimize}\quad & \tilde f_0(x_1)\\
+\text{subject to}\quad & \tilde f_i(x_1)\le0,\quad i=1,\dots,m_1.
+\end{aligned}
+\]
+\end{example}
+
+\subsection{Epigraph 形式}
+\begin{definition}{目标最小化到上图形式}{epigraph-form}
+原问题
+\[
+\begin{aligned}
+\text{minimize}\quad & f_0(x)\\
+\text{subject to}\quad & f_i(x)\le0,\quad i=1,\dots,m,\\
+& h_j(x)=0,\quad j=1,\dots,p
+\end{aligned}
+\]
+可等价改写为
+\[
+\begin{aligned}
+\text{minimize}\quad & t\\
+\text{subject to}\quad & f_0(x)-t\le0,\\
+& f_i(x)\le0,\quad i=1,\dots,m,\\
+& h_j(x)=0,\quad j=1,\dots,p.
+\end{aligned}
+\]
+\end{definition}
+
+\begin{remark}{为什么“等价”}{equivalence-note}
+上述转化保持可行域不变，且在目标函数部分保持解的排序关系（特别是 $\psi_0$ 单调递增时）。因此原问题与转化后问题具有相同的最优解集合。
+\end{remark}
+
+\section{Convex Optimization Problem}\label{sec:ch4-convex-opt}
+
+\begin{definition}{凸优化问题的标准形式}{convex-opt-standard}
+考虑问题
+\[
+\begin{aligned}
+\text{minimize}\quad & f_0(x)\\
+\text{subject to}\quad & f_i(x)\le0,\quad i=1,\dots,m,\\
+& a_i^Tx=b_i,\quad i=1,\dots,p.
+\end{aligned}
+\]
+若 $f_i\ (i=0,1,\dots,m)$ 均为凸函数，且等式约束为仿射约束，则该问题是凸优化问题。
+\end{definition}
+
+\begin{theorem}{凸优化中的局部最优与全局最优}{local-global-convex}
+在凸优化问题中，任一局部最优解都是全局最优解。
+\end{theorem}
+
+\begin{definition}{可微目标的一阶最优性条件}{first-order-optimality}
+设 $\mathcal X_f$ 为可行集。若 $f_0$ 可微且问题为凸优化，则
+\[
+x^\star \text{ 为最优解}
+\iff
+x^\star\in\mathcal X_f,\ 
+\nabla f_0(x^\star)^T(y-x^\star)\ge0,\ \forall y\in\mathcal X_f.
+\]
+\end{definition}
+
+\begin{example}{仅含等式约束时的一阶条件}{equality-constrained-stationarity}
+考虑
+\[
+\min f_0(x)\quad \text{s.t.}\quad Ax=b,\qquad \operatorname{dom}f_0=\mathbb R^n.
+\]
+由一阶条件可得
+\[
+\nabla f_0(x^\star)^T(y-x^\star)\ge0,\quad \forall y\ \text{s.t.}\ Ay=b.
+\]
+令 $y=x^\star+v$，则 $v\in\mathcal N(A)=\{d\mid Ad=0\}$，于是
+\[
+\nabla f_0(x^\star)^Tv\ge0,\quad \forall v\in\mathcal N(A).
+\]
+又因 $\mathcal N(A)$ 为线性子空间，$-v\in\mathcal N(A)$，故亦有
+\[
+\nabla f_0(x^\star)^Tv\le0.
+\]
+综合得
+\[
+\nabla f_0(x^\star)^Tv=0,\quad \forall v\in\mathcal N(A),
+\]
+即 $\nabla f_0(x^\star)\perp\mathcal N(A)$，等价于
+\[
+\nabla f_0(x^\star)\in\mathcal R(A^T).
+\]
+因此存在 $\lambda\in\mathbb R^p$ 使得
+\[
+\nabla f_0(x^\star)+A^T\lambda=0.
+\]
+\end{example}
+
+\section{Quasi-convex Optimization}\label{sec:ch4-quasi-convex}
+
+\begin{definition}{拟凸优化问题}{quasi-convex-problem}
+考虑
+\[
+\begin{aligned}
+\text{minimize}\quad & f_0(x)\\
+\text{subject to}\quad & f_i(x)\le0,\quad i=1,\dots,m,\\
+& Ax=b.
+\end{aligned}
+\]
+其中 $f_0$ 为 quasi-convex 函数，$f_i$ 为凸函数，$Ax=b$ 为仿射约束。
+\end{definition}
+
+\begin{remark}{可微情形下的一个充分条件}{quasi-convex-sufficient}
+设 $f_0$ 可微，$\mathcal X_f=\{x\mid f_i(x)\le0,\ h_j(x)=0\}$。笔记中常用的一个充分条件是
+\[
+\nabla f_0(x^\star)^T(y-x^\star)>0,\quad
+\forall y\in\mathcal X_f\setminus\{x^\star\}.
+\]
+该条件是充分条件，不是充要条件。
+\end{remark}
+
+\section{典型 Convex Problems}\label{sec:ch4-typical-problems}
+
+\subsection{线性规划（Linear Programming）}
+\begin{definition}{线性规划标准型}{linear-programming}
+线性规划可写为
+\[
+\begin{array}{ll}
+\text{minimize} & c^Tx+d\\
+\text{subject to} & Gx\preceq h\\
+& Ax=b,
+\end{array}
+\]
+其中 $c\in\mathbb R^n,\ d\in\mathbb R,\ G\in\mathbb R^{m\times n},\ h\in\mathbb R^m,\ A\in\mathbb R^{p\times n},\ b\in\mathbb R^p$。目标函数和约束函数均为线性（仿射）函数。
+\end{definition}
+
+\begin{remark}{广义不等式记号约定}{generalized-inequality-convention}
+本节中，向量约束的 $\preceq,\succeq$ 表示相对于非负正交锥 $\mathbb R_+^m$ 的广义不等式（即逐元素不等式）；矩阵约束的 $\preceq,\succeq$ 表示相对于半正定锥 $\mathbf S_+^n$ 的 Loewner 序。
+\end{remark}
+
+\begin{example}{LP 的两类常见等价变换}{lp-equivalent-transform}
+\textbf{(a) 不等式转等式：}
+\[
+\begin{array}{ll}
+\text{minimize} & c^Tx+d\\
+\text{subject to} & Gx+s=h\\
+& Ax=b\\
+& s\succeq0.
+\end{array}
+\]
+
+\textbf{(b) 自由变量分解：}
+令 $x=x^+-x^-$，其中 $x^+\succeq0,\ x^-\succeq0$，则
+\[
+\begin{array}{ll}
+\text{minimize} & c^Tx^+-c^Tx^-+d\\
+\text{subject to} & Gx^+-Gx^-+s=h\\
+& Ax^+-Ax^-=b\\
+& s\succeq0,\ x^+\succeq0,\ x^-\succeq0.
+\end{array}
+\]
+\end{example}
+
+\begin{definition}{LP 的另一种标准形式}{lp-alternative-standard-form}
+线性规划也常写为
+\[
+\begin{aligned}
+\text{minimize}\quad & c^Tx\\
+\text{subject to}\quad & Ax=b,\\
+& x\succeq0.
+\end{aligned}
+\]
+\end{definition}
+
+\begin{example}{线性分数规划（Linear Fractional Programming, LFP）}{lfp-to-lp}
+考虑线性分数规划
+\[
+\begin{aligned}
+(\mathrm P0)\quad
+\text{minimize}\quad & f_0(x)\\
+\text{subject to}\quad & Gx\preceq h,\\
+& Ax=b,
+\end{aligned}
+\]
+其中
+\[
+f_0(x)=\frac{c^Tx+d}{e^Tx+f},\qquad
+\operatorname{dom}f_0=\{x\mid e^Tx+f>0\}.
+\]
+令
+\[
+y=\frac{x}{e^Tx+f},\qquad z=\frac{1}{e^Tx+f},
+\]
+则可得到等价线性规划
+\[
+\begin{aligned}
+(\mathrm P1)\quad
+\text{minimize}\quad & c^Ty+dz\\
+\text{subject to}\quad & Gy-hz\preceq0,\\
+& Ay-bz=0,\\
+& e^Ty+fz=1,\\
+& z\ge0.
+\end{aligned}
+\]
+\end{example}
+
+\subsection{二次优化（Quadratic Optimization）}
+\begin{definition}{二次规划（QP）}{qp-standard-form}
+二次规划问题可写为
+\[
+\begin{aligned}
+\text{minimize}\quad & \frac12x^TPx+q^Tx+r\\
+\text{subject to}\quad & Gx\preceq h,\\
+& Ax=b,
+\end{aligned}
+\]
+其中 $P\in\mathbf S_+^n,\ G\in\mathbb R^{m\times n},\ A\in\mathbb R^{p\times n}$。
+\end{definition}
+
+\begin{definition}{QCQP（Quadratically Constrained Quadratic Program）}{qcqp-standard-form}
+\[
+\begin{aligned}
+\text{minimize}\quad & \frac12x^TP_0x+q_0^Tx+r_0\\
+\text{subject to}\quad & \frac12x^TP_ix+q_i^Tx+r_i\le0,\quad i=1,\dots,m,\\
+& Ax=b.
+\end{aligned}
+\]
+\end{definition}
+
+\subsection{半正定规划（Semidefinite Programming, SDP）}
+\begin{definition}{SDP 标准形式}{sdp-standard-form}
+半正定规划的标准形式为
+\[
+\begin{aligned}
+\text{minimize}\quad & \operatorname{tr}(CX)\\
+\text{subject to}\quad & \operatorname{tr}(A_iX)=b_i,\quad i=1,\dots,p,\\
+& X\succeq0,
+\end{aligned}
+\]
+其中 $X\in\mathbf S_+^n,\ C\in\mathbf S^n,\ A_i\in\mathbf S^n,\ b_i\in\mathbb R$。
+\end{definition}
+
+\begin{remark}{迹内积表示}{trace-inner-product}
+对于对称矩阵变量，目标可看作矩阵内积：
+\[
+\operatorname{tr}(CX)=\sum_{i,j}C_{ij}X_{ij}.
+\]
+\end{remark}
+
+\begin{example}{SDP 的对角特例}{sdp-diagonal-special-case}
+设 $X\in\mathbf S^n$ 为对角矩阵，并记
+\[
+x=\operatorname{diag}(X)\in\mathbb R^n,
+\]
+即 $\operatorname{diag}(X)$ 表示由对角矩阵 $X$ 的对角元素构成的列向量。考虑
+\[
+\begin{aligned}
+\text{minimize}\quad & \operatorname{tr}(CX)\\
+\text{subject to}\quad & \operatorname{tr}(A_iX)=b_i,\quad i=1,\dots,p,\\
+& X\succeq0,\quad X\ \text{is diagonal}.
+\end{aligned}
+\]
+令 $c=\operatorname{diag}(C)$、$a_i=\operatorname{diag}(A_i)$，则上式等价为
+\[
+\begin{aligned}
+\text{minimize}\quad & c^Tx\\
+\text{subject to}\quad & a_i^Tx=b_i,\quad i=1,\dots,p,\\
+& x\ge0.
+\end{aligned}
+\]
+因此该对角情形退化为线性规划（LP）。
+\end{example}
+
+\begin{definition}{SDP 的常见等价写法}{sdp-equivalent-form}
+另一种常见写法为
+\[
+\begin{aligned}
+\text{minimize}\quad & c^Tx\\
+\text{subject to}\quad & \sum_{i=1}^n x_iF_i+G\preceq0,\\
+& Ax=b,
+\end{aligned}
+\]
+其中 $F_i,G\in\mathbf S^k,\ A\in\mathbb R^{p\times n}$。
+\end{definition}
+
+\begin{example}{谱范数（最大奇异值）最小化的 SDP 形式}{spectral-norm-sdp}
+设
+\[
+A(x)=A_0+x_1A_1+\cdots+x_nA_n,\qquad
+A_i\in\mathbb R^{p\times q},\ x\in\mathbb R^n.
+\]
+考虑问题
+\[
+\min_{x}\ \|A(x)\|_2.
+\]
+引入标量变量 $t$ 后，可写为等价形式
+\[
+\begin{aligned}
+\text{minimize}\quad & t\\
+\text{subject to}\quad &
+\begin{bmatrix}
+tI_p & A(x)\\
+A(x)^T & tI_q
+\end{bmatrix}\succeq0.
+\end{aligned}
+\]
+这给出了一个标准的 LMI 约束 SDP。
+\end{example}
+
+\begin{remark}{其他常见等价写法}{spectral-norm-sdp-forms}
+同一约束还可写成（在 $t\ge0$ 下）
+\[
+A(x)^TA(x)-t^2I_q\preceq0,
+\]
+以及对称块矩阵的等价形式
+\[
+\begin{bmatrix}
+tI_q & A(x)^T\\
+A(x) & tI_p
+\end{bmatrix}\succeq0.
+\]
+这些形式可由 Schur 补与块矩阵恒等关系互相转换。
+\end{remark}
+
+\subsection{二阶锥规划（Second-Order Cone Program, SOCP）}
+\begin{definition}{SOCP 标准形式}{socp-standard-form}
+二阶锥规划可写为
+\[
+\begin{aligned}
+\text{minimize}\quad & f^Tx\\
+\text{subject to}\quad & \|A_ix+b_i\|_2\le c_i^Tx+d_i,\quad i=1,\dots,m,\\
+& Fx=g.
+\end{aligned}
+\]
+其中每个
+\[
+\|A_ix+b_i\|_2\le c_i^Tx+d_i
+\]
+称为二阶锥约束（second-order cone constraint）。
+\[
+\text{等价地，}\ (c_i^Tx+d_i,\ A_ix+b_i)\in\mathcal Q^{k_i+1},
+\]
+其中 $k_i=\dim(A_ix+b_i)$。
+即相对于二阶锥 $\mathcal Q^{k_i+1}$ 的广义不等式约束。
+\end{definition}
+
+\end{document}

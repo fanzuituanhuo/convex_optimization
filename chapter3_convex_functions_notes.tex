@@ -1,0 +1,1015 @@
+% !TEX program = xelatex
+% ============================================================
+%  第 3 章 Convex Functions — 基于 chapter2 的统一视觉结构
+% ============================================================
+
+\documentclass[11pt,a4paper]{article}
+
+% ------------------------------------------------------------
+%  字体与页面
+% ------------------------------------------------------------
+\IfFileExists{geometry.sty}{%
+  \usepackage[margin=2.5cm]{geometry}
+}{%
+  \PackageWarning{geometry}{未找到 geometry 宏包，已使用默认 A4 页边距。建议安装
+    宏包 `geometry' 以获得 2.5cm 边距。}%
+}
+\usepackage{ctex}
+\usepackage{microtype}
+\linespread{1.08}
+
+% ------------------------------------------------------------
+%  工具宏包
+% ------------------------------------------------------------
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{mathtools}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{tikz}
+\usetikzlibrary{arrows,calc,positioning}
+\usepackage[dvipsnames]{xcolor}
+\usepackage[most]{tcolorbox}
+\usepackage{titlesec}
+\usepackage{setspace}
+\setlength{\parskip}{0.35em}
+\setlength{\parindent}{2em}
+\setlist[itemize]{itemsep=0.2em, topsep=0.25em}
+\setlist[enumerate]{itemsep=0.2em, topsep=0.25em}
+
+% ------------------------------------------------------------
+%  颜色与简易高亮
+% ------------------------------------------------------------
+\definecolor{mydarkblue}{rgb}{0.0,0.08,0.45}
+\definecolor{cardbg}{RGB}{245,245,247}
+\definecolor{highlight}{HTML}{FCD66F}
+\definecolor{warning}{HTML}{E57373}
+\definecolor{info}{HTML}{4DB6AC}
+\newcommand{\tlight}[1]{\textcolor{warning}{#1}}
+\newcommand{\tinfo} [1]{\textcolor{info}{#1}}
+\newcommand{\cbox}  [2]{\colorbox{#1}{\textcolor{black}{#2}}}
+\newcommand{\bglight}[1]{\cbox{highlight}{#1}}
+\newcommand{\bgwarn} [1]{\cbox{warning}{#1}}
+\newcommand{\bginfo} [1]{\cbox{info}{#1}}
+% 集合记号（避免 C_\alpha^\pm(f) 上标/下标过挤）
+\newcommand{\sublevel}[2]{C_{#2}^{-}(#1)}
+\newcommand{\suplevel}[2]{C_{#2}^{+}(#1)}
+
+% ------------------------------------------------------------
+%  超链接
+% ------------------------------------------------------------
+\usepackage{hyperref}
+\hypersetup{
+  colorlinks = true,
+  linkcolor  = mydarkblue,
+  citecolor  = mydarkblue,
+  urlcolor   = mydarkblue
+}
+
+% ------------------------------------------------------------
+%  章节标题
+% ------------------------------------------------------------
+\titleformat{\section}
+  {\large\bfseries\color{mydarkblue}}{\thesection}{0.5em}{}[\titlerule]
+\titlespacing*{\section}{0pt}{1.5ex}{1ex}
+
+\titleformat{\subsection}
+  {\normalsize\bfseries}{\thesubsection}{0.5em}{}
+\titlespacing*{\subsection}{0pt}{1ex}{0.5ex}
+
+% ------------------------------------------------------------
+%  顶栏 + 横向导航
+% ------------------------------------------------------------
+\makeatletter
+\newcommand{\makeChapterThreeTitle}{%
+  \begin{tcolorbox}[
+    colback=mydarkblue!5, colframe=mydarkblue!10,
+    arc=3pt, boxrule=0.5pt,
+    left=5pt, right=5pt, top=5pt, bottom=5pt
+  ]
+    {\large\bfseries\@title}\hfill{\small\@author}\\[-2pt]
+    {\tiny\color{gray}\@date\hfill Chapter 3 · Convex functions notes}
+  \end{tcolorbox}
+  \vspace{-0.6em}
+}
+\makeatother
+
+\newtcolorbox{tabNavBoxSmall}[1][]{
+  enhanced,
+  colframe=white, colback=gray!5, coltext=black!80,
+  fontupper=\sffamily\small\bfseries,
+  arc=1.5mm, boxrule=0pt, bottomrule=2pt,
+  left=2mm, right=2mm, top=1.5mm, bottom=1.5mm,
+  #1
+}
+
+\newcommand{\horizontalTOCChThree}{%
+  \begin{center}
+  \begin{tcbraster}[
+    raster columns=3, raster width=\linewidth,
+    raster column skip=1mm, raster equal height
+  ]
+    \begin{tabNavBoxSmall}
+      \hyperref[sec:ch3-three-defs]{\ 四种定义与等价条件}
+    \end{tabNavBoxSmall}
+    \begin{tabNavBoxSmall}
+      \hyperref[sec:ch3-extension]{\ 扩展值函数}
+    \end{tabNavBoxSmall}
+    \begin{tabNavBoxSmall}
+      \hyperref[sec:ch3-second-order]{\ 二阶条件与例子}
+    \end{tabNavBoxSmall}
+    \begin{tabNavBoxSmall}
+      \hyperref[sec:ch3-common-functions]{\ 常见函数}
+    \end{tabNavBoxSmall}
+    \begin{tabNavBoxSmall}
+      \hyperref[sec:ch3-preserve-convexity]{\ 保持函数凸性}
+    \end{tabNavBoxSmall}
+    \begin{tabNavBoxSmall}
+      \hyperref[sec:ch3-sublevel]{\ 次水平集}
+    \end{tabNavBoxSmall}
+    \begin{tabNavBoxSmall}
+      \hyperref[sec:ch3-quasiconvex]{\ 拟凸函数}
+    \end{tabNavBoxSmall}
+    \begin{tabNavBoxSmall}
+      \hyperref[sec:ch3-logconvex]{\ 对数凸与对数凹}
+    \end{tabNavBoxSmall}
+  \end{tcbraster}
+  \vspace{-2.5pt}%
+  \noindent\textcolor{gray!30}{\rule{\linewidth}{1pt}}
+  \end{center}
+  \vspace{1.2em}
+}
+
+% ------------------------------------------------------------
+%  定理环境
+% ------------------------------------------------------------
+\tcbset{
+  mytheo/.style={
+    enhanced, breakable,
+    colback=#1!5!white, colframe=#1!70!black,
+    coltitle=white, fonttitle=\bfseries\small,
+    boxrule=0.6pt, arc=3pt,
+    left=5pt, right=5pt, top=10pt, bottom=5pt,
+    attach boxed title to top left={yshift*=-\tcboxedtitleheight/2, xshift=2mm},
+    boxed title style={
+      colback=#1!80!black, colframe=#1!80!black,
+      boxrule=0pt, arc=2pt
+    }
+  }
+}
+\newtcbtheorem[auto counter]            {theorem}    {定理}{mytheo=WildStrawberry}{thm}
+\newtcbtheorem[use counter from=theorem]{definition} {定义}{mytheo=NavyBlue}{def}
+\newtcbtheorem[use counter from=theorem]{example}    {例子}{mytheo=YellowOrange}{ex}
+\newtcbtheorem[use counter from=theorem]{remark}     {注解}{mytheo=Periwinkle}{rem}
+
+\tcolorboxenvironment{proof}{
+  blanker, breakable, left=4pt, right=4pt, top=3pt, bottom=3pt,
+  borderline west={2pt}{0pt}{gray!50}
+}
+
+\title{第 3 章\quad Convex Functions 笔记}
+\author{}
+\date{\today}
+
+\begin{document}
+
+\makeChapterThreeTitle
+\horizontalTOCChThree
+
+\section{四种定义与等价条件}\label{sec:ch3-three-defs}
+
+\begin{definition}{凸函数（Jensen 形式）}{convex-jensen}
+设函数 $f:\mathbb{R}^n\to\mathbb{R}$，且 $\operatorname{dom}f$ 为凸集。若对任意
+$x,y\in\operatorname{dom}f$ 和任意 $\theta\in[0,1]$，都有
+\[
+f\!\bigl(\theta x+(1-\theta)y\bigr)
+\le
+\theta f(x)+(1-\theta)f(y),
+\]
+则称 $f$ 为凸函数（convex function）。
+\end{definition}
+
+\begin{definition}{沿直线限制函数的凸性}{convex-on-lines}
+对任意 $x\in\operatorname{dom}f$ 与任意方向 $v\in\mathbb{R}^n$，定义
+\[
+g(t)=f(x+tv),\qquad
+\operatorname{dom}g=\{t\in\mathbb{R}\mid x+tv\in\operatorname{dom}f\}.
+\]
+若 $g$ 在其定义域上为一元凸函数，则称 $f$ 在任意直线上的限制是凸的。
+\end{definition}
+
+\begin{definition}{一阶条件（可微情形）}{first-order-condition}
+若 $f$ 可微，则下式成立当且仅当 $f$ 为凸函数：
+\[
+f(y)\ge f(x)+\nabla f(x)^T(y-x),\qquad
+\forall x,y\in\operatorname{dom}f.
+\]
+几何上，这表示函数图像总在任一点切平面之上。
+\end{definition}
+
+\begin{definition}{上图（epigraph）定义}{epigraph-definition}
+定义
+\[
+\operatorname{epi}f
+=
+\left\{(x,t)\in\operatorname{dom}f\times\mathbb{R}\mid t\ge f(x)\right\}.
+\]
+则
+\[
+f\ \text{为凸函数}
+\iff
+\operatorname{epi}f\ \text{为凸集}.
+\]
+\end{definition}
+
+\begin{theorem}{可微函数凸性的等价刻画}{equivalence-c1}
+设 $f:\mathbb{R}^n\to\mathbb{R}$ 在凸域 $\operatorname{dom}f$ 上可微，则以下两条等价：
+\begin{enumerate}[label=(\arabic*)]
+  \item $f$ 满足 Jensen 形式的凸性定义；
+  \item 对任意 $x,y\in\operatorname{dom}f$，有
+  \[
+  f(y)\ge f(x)+\nabla f(x)^T(y-x).
+  \]
+\end{enumerate}
+\end{theorem}
+
+\begin{remark}{与 epigraph 定义的关系}{epi-relation}
+上面的 Jensen 形式、一阶条件（可微情形）与 epigraph 定义都可作为凸函数的等价刻画。这里保留了你原笔记中的一阶证明主线，并把 epigraph 作为补充定义并列给出。
+\end{remark}
+
+\begin{proof}
+\textbf{(1) $\Rightarrow$ (2).}
+由凸性定义，对任意 $t\in(0,1]$，
+\[
+f\bigl(x+t(y-x)\bigr)\le (1-t)f(x)+tf(y).
+\]
+整理得
+\[
+f(y)\ge f(x)+\frac{f\bigl(x+t(y-x)\bigr)-f(x)}{t}.
+\]
+令 $t\downarrow 0$，由于 $f$ 在 $x$ 处可微，
+\[
+\lim_{t\downarrow 0}\frac{f\bigl(x+t(y-x)\bigr)-f(x)}{t}
+=\nabla f(x)^T(y-x),
+\]
+故
+\[
+f(y)\ge f(x)+\nabla f(x)^T(y-x).
+\]
+
+\textbf{(2) $\Rightarrow$ (1).}
+任取 $x,y\in\operatorname{dom}f$，$\theta\in[0,1]$，记
+\[
+z=\theta x+(1-\theta)y.
+\]
+将一阶条件分别用于点对 $(z,x)$ 与 $(z,y)$：
+\[
+f(x)\ge f(z)+\nabla f(z)^T(x-z),\qquad
+f(y)\ge f(z)+\nabla f(z)^T(y-z).
+\]
+对上面两式分别乘以 $\theta$、$1-\theta$ 后相加，得
+\[
+\theta f(x)+(1-\theta)f(y)
+\ge
+f(z)+\nabla f(z)^T\!\bigl(\theta(x-z)+(1-\theta)(y-z)\bigr).
+\]
+而
+\[
+\theta(x-z)+(1-\theta)(y-z)=0,
+\]
+于是
+\[
+f(z)\le \theta f(x)+(1-\theta)f(y),
+\]
+即
+\[
+f\!\bigl(\theta x+(1-\theta)y\bigr)
+\le
+\theta f(x)+(1-\theta)f(y).
+\]
+故 $f$ 为凸函数。
+\end{proof}
+
+\section{扩展值函数}\label{sec:ch3-extension}
+
+\begin{definition}{扩展值扩张（extended-value extension）}{extended-value}
+设 $f:\operatorname{dom}f\to\mathbb{R}$ 为凸函数，定义
+\[
+\tilde f:\mathbb{R}^n\to\mathbb{R}\cup\{+\infty\},\qquad
+\tilde f(x)=
+\begin{cases}
+f(x), & x\in\operatorname{dom}f,\\
++\infty, & x\notin\operatorname{dom}f.
+\end{cases}
+\]
+则有
+\[
+\operatorname{dom}f=\{x\in\mathbb{R}^n\mid \tilde f(x)<+\infty\}.
+\]
+\end{definition}
+
+\begin{remark}{为什么常用扩展值写法}{why-extended}
+使用扩展值函数后，约束条件可被吸收到目标函数中，很多凸优化问题可统一写成无约束形式，便于理论推导与算法描述。
+\end{remark}
+
+\begin{definition}{凹函数的扩展值扩张（extended-value extension）}{extended-value-concave}
+设 $f:\operatorname{dom}f\to\mathbb{R}$ 为凹函数，定义
+\[
+\tilde f:\mathbb{R}^n\to\mathbb{R}\cup\{-\infty\},\qquad
+\tilde f(x)=
+\begin{cases}
+f(x), & x\in\operatorname{dom}f,\\
+-\infty, & x\notin\operatorname{dom}f.
+\end{cases}
+\]
+则有
+\[
+\operatorname{dom}f=\{x\in\mathbb{R}^n\mid \tilde f(x)>-\infty\}.
+\]
+\end{definition}
+
+\section{二阶条件与例子}\label{sec:ch3-second-order}
+
+\begin{definition}{二阶可微函数的 Hessian 判别}{hessian-criterion}
+设 $f:\mathbb{R}^n\to\mathbb{R}$ 在凸域 $\operatorname{dom}f$ 上二阶可微，则
+\[
+f\ \text{为凸函数}
+\iff
+\nabla^2 f(x)\succeq 0,\quad \forall x\in\operatorname{dom}f.
+\]
+若进一步有
+\[
+\nabla^2 f(x)\succ 0,\quad \forall x\in\operatorname{dom}f,
+\]
+则 $f$ 为严格凸函数（strictly convex）。
+\end{definition}
+
+\begin{example}{二次函数}{quadratic-example}
+考虑
+\[
+f(x)=\frac12 x^TPx+q^Tx+r,\qquad
+P\in\mathbb{S}^n,\ q\in\mathbb{R}^n,\ r\in\mathbb{R}.
+\]
+其 Hessian 为
+\[
+\nabla^2 f(x)=P.
+\]
+因此：
+\begin{itemize}
+  \item $P\succeq 0 \Rightarrow f$ 凸；
+  \item $P\succ 0 \Rightarrow f$ 严格凸。
+\end{itemize}
+\end{example}
+
+\begin{example}{定义域非凸导致不能称为凸函数}{nonconvex-domain}
+设一元函数
+\[
+f(x)=\frac{1}{x^2},\qquad x\in\mathbb{R}\setminus\{0\}.
+\]
+其定义域 $\mathbb{R}\setminus\{0\}$ 不是凸集，因此在凸优化语境下，不能把该函数直接视为定义在凸域上的凸函数。
+\end{example}
+
+\section{常见函数}\label{sec:ch3-common-functions}
+
+\begin{itemize}
+  \item \textbf{Affine functions}：
+  \[
+  f(x)=Ax+b,\qquad \nabla^2 f(x)=0.
+  \]
+
+  \item \textbf{Exponential function}：
+  \[
+  f(x)=e^{-x},\qquad x\in\mathbb{R},
+  \]
+  其二阶导为 $e^{-x}>0$，故为凸函数。
+
+  \item \textbf{幂函数}：
+  \[
+  f(x)=x^a,\qquad x\in\mathbb{R}_{++}.
+  \]
+  当 $a\ge 1$ 时为凸函数；当 $0\le a\le 1$ 时为凹函数。
+
+  \item \textbf{绝对值幂函数}：
+  \[
+  f(x)=|x|^p,\qquad p\ge 1,
+  \]
+  为凸函数。
+
+  \item \textbf{对数函数}：
+  \[
+  f(x)=\log x,\qquad x\in\mathbb{R}_{++},
+  \]
+  为凹函数。
+
+  \item \textbf{Negative entropy}：
+  \[
+  f(x)=x\log x,\qquad x\in\mathbb{R}_{++},
+  \]
+  为凸函数。
+
+  \item \textbf{Norms}：$\mathbb{R}^n$ 上任意范数都是凸函数。常见例子：
+  \begin{align*}
+    \ell_1\text{-norm: } &\quad \|x\|_1=\sum_{i=1}^n |x_i|, \\
+    \ell_2\text{-norm: } &\quad \|x\|_2=\sqrt{\sum_{i=1}^n x_i^2}, \\
+    \ell_\infty\text{-norm: } &\quad \|x\|_\infty=\max_i |x_i|.
+  \end{align*}
+
+  \item \textbf{最大值函数}：
+  \[
+  f(x)=\max\{x_1,x_2,\dots,x_n\},\qquad x\in\mathbb{R}^n,
+  \]
+  是凸函数。
+
+  \item \textbf{Log-sum-exp}：
+  \[
+  f(x)=\log\!\Bigl(\sum_{i=1}^n e^{x_i}\Bigr),\qquad x\in\mathbb{R}^n.
+  \]
+  它满足
+  \[
+  \max_i x_i \le f(x)\le \max_i x_i+\log n,
+  \]
+  因而是 $\max_i x_i$ 的光滑近似（analytic approximation）。
+\end{itemize}
+
+\begin{example}{行列式对数函数}{logdet-example}
+定义
+\[
+f(X)=\log\det X,\qquad \operatorname{dom}f=\mathbb{S}_{++}^n.
+\]
+取任意 $Z\in\mathbb{S}_{++}^n$ 与对称方向 $V\in\mathbb{S}^n$，考虑沿直线的限制函数
+\[
+g(t)=f(Z+tV)=\log\det(Z+tV),
+\]
+其中 $t$ 取使 $Z+tV\in\mathbb{S}_{++}^n$ 的区间。写作
+\[
+Z+tV
+=
+Z^{1/2}\!\left(I+t\,Z^{-1/2}VZ^{-1/2}\right)Z^{1/2},
+\]
+于是
+\[
+g(t)=\log\det Z+\log\det\!\left(I+t\,Z^{-1/2}VZ^{-1/2}\right).
+\]
+令对称矩阵 $Z^{-1/2}VZ^{-1/2}=Q\Lambda Q^T$，$\Lambda=\operatorname{diag}(\lambda_1,\dots,\lambda_n)$，则
+\[
+\det\!\left(I+t\,Z^{-1/2}VZ^{-1/2}\right)=\prod_{i=1}^n(1+t\lambda_i),
+\]
+从而
+\[
+g(t)=\log\det Z+\sum_{i=1}^n\log(1+t\lambda_i).
+\]
+进一步有
+\[
+g'(t)=\sum_{i=1}^n\frac{\lambda_i}{1+t\lambda_i},\qquad
+g''(t)=-\sum_{i=1}^n\frac{\lambda_i^2}{(1+t\lambda_i)^2}\le 0.
+\]
+所以 $g$ 为凹函数，故 $f(X)=\log\det X$ 在 $\mathbb{S}_{++}^n$ 上是凹函数。
+\end{example}
+
+\section{保持函数凸性}\label{sec:ch3-preserve-convexity}
+
+\begin{example}{非负加权和与非负积分保持凸性}{preserve-weighted-sum}
+设 $f_1,\dots,f_m$ 为凸函数，$w_i\ge 0$，定义
+\[
+f(x)=\sum_{i=1}^m w_i f_i(x).
+\]
+则 $f$ 为凸函数。更一般地，若对任意 $y\in A$，$f(x,y)$ 关于 $x$ 为凸函数，且 $w(y)\ge 0$，定义
+\[
+g(x)=\int_A w(y)f(x,y)\,\mathrm{d}y,
+\]
+则 $g$ 也为凸函数。
+\end{example}
+
+\begin{proof}
+任取 $x_1,x_2$ 与 $\theta\in[0,1]$。由每个 $f_i$ 的凸性，
+\[
+f_i(\theta x_1+(1-\theta)x_2)\le \theta f_i(x_1)+(1-\theta)f_i(x_2).
+\]
+两边乘以 $w_i\ge 0$ 并求和，得
+\[
+f(\theta x_1+(1-\theta)x_2)\le \theta f(x_1)+(1-\theta)f(x_2).
+\]
+积分形式同理：对每个固定 $y$ 使用凸性不等式，再乘以 $w(y)\ge0$ 对 $A$ 积分即可。
+\end{proof}
+
+\begin{theorem}{仿射映射复合保持凸性}{preserve-affine-composition}
+设 $f:\mathbb{R}^m\to\mathbb{R}$ 为凸函数，$A\in\mathbb{R}^{m\times n}$，$b\in\mathbb{R}^m$，定义
+\[
+g(x)=f(Ax+b),\qquad
+\operatorname{dom}g=\{x\mid Ax+b\in\operatorname{dom}f\}.
+\]
+则 $g$ 为凸函数。
+\end{theorem}
+
+\begin{proof}
+任取 $x,y\in\operatorname{dom}g$，$\theta\in[0,1]$，有
+\[
+\begin{aligned}
+g\bigl(\theta x+(1-\theta)y\bigr)
+&=f\bigl(A(\theta x+(1-\theta)y)+b\bigr) \\
+&=f\bigl(\theta(Ax+b)+(1-\theta)(Ay+b)\bigr) \\
+&\le \theta f(Ax+b)+(1-\theta)f(Ay+b) \\
+&=\theta g(x)+(1-\theta)g(y).
+\end{aligned}
+\]
+故 $g$ 为凸函数。
+\end{proof}
+
+\begin{theorem}{一般线性组合的凸性判别}{preserve-linear-combination}
+设 $f_1,\dots,f_m:\mathbb{R}^n\to\mathbb{R}$ 为凸函数，定义
+\[
+g(x)=a^T
+\begin{bmatrix}
+f_1(x)\\ \vdots\\ f_m(x)
+\end{bmatrix}
++b.
+\]
+当 $a_i\ge 0$（$i=1,\dots,m$）时，$g$ 必为凸函数；若存在负系数，则一般不能保证 $g$ 仍凸。
+\end{theorem}
+
+\begin{proof}
+$a_i\ge0$ 时由前一条“非负加权和保持凸性”立得。反例说明“负系数时不保证”：取
+$f_1(x)=x^2$（凸），令 $g(x)=-f_1(x)=-x^2$，则 $g$ 为凹而非凸。
+\end{proof}
+
+\begin{theorem}{点态最大值保持凸性}{preserve-pointwise-max}
+若 $\{f_\alpha\}_{\alpha\in\mathcal{A}}$ 是一族凸函数，定义
+\[
+f(x)=\sup_{\alpha\in\mathcal{A}} f_\alpha(x),
+\]
+则 $f$ 为凸函数（在其有效定义域上）。
+\end{theorem}
+
+\begin{proof}
+任取 $x_1,x_2$ 与 $\theta\in[0,1]$，对任意 $\alpha$ 有
+\[
+f_\alpha(\theta x_1+(1-\theta)x_2)
+\le
+\theta f_\alpha(x_1)+(1-\theta)f_\alpha(x_2).
+\]
+对 $\alpha$ 取上确界，得
+\[
+f(\theta x_1+(1-\theta)x_2)
+\le
+\theta f(x_1)+(1-\theta)f(x_2).
+\]
+故 $f$ 为凸函数。
+\end{proof}
+
+\begin{example}{有限个凸函数最大值}{max-two-convex}
+若 $f_1,f_2$ 为凸函数，则
+\[
+f(x)=\max\{f_1(x),f_2(x)\},\qquad
+\operatorname{dom}f=\operatorname{dom}f_1\cap\operatorname{dom}f_2
+\]
+为凸函数。例如 $f(x)=\max\{x^2,x\}$。
+\end{example}
+
+\begin{example}{Sum of $r$ largest components}{sum-largest-components-convex}
+对 $x\in\mathbb{R}^n$，记 $x_{[1]}\ge x_{[2]}\ge\cdots\ge x_{[n]}$ 为降序分量，定义
+\[
+f(x)=\sum_{i=1}^r x_{[i]}.
+\]
+则 $f$ 为凸函数。
+\end{example}
+
+\begin{proof}
+有表示式
+\[
+f(x)=\max\Bigl\{x_{i_1}+\cdots+x_{i_r}\ \Big|\ 1\le i_1<\cdots<i_r\le n\Bigr\}.
+\]
+右侧为有限个仿射函数的点态最大值，由“点态最大值保持凸性”可知 $f$ 为凸函数。
+\end{proof}
+
+\begin{theorem}{无限族凸函数上确界的定义域}{sup-family-domain}
+若对任意 $y\in A$，$f(x,y)$ 关于 $x$ 为凸函数，定义
+\[
+g(x)=\sup_{y\in A} f(x,y),
+\]
+则 $g$ 为凸函数，其定义域可写为
+\[
+\operatorname{dom}g=
+\left\{
+x\ \middle|\
+(x,y)\in\operatorname{dom}f,\ \forall y\in A,\
+\sup_{y\in A}f(x,y)<\infty
+\right\}.
+\]
+\end{theorem}
+
+\begin{proof}
+结论直接由“点态最大值保持凸性”得到；定义域写法来自上确界函数取有限实值的条件。
+\end{proof}
+
+\begin{example}{实对称矩阵的最大特征值}{lambda-max-convex}
+设
+\[
+f(X)=\lambda_{\max}(X),\qquad \operatorname{dom}f=\mathbb{S}^m.
+\]
+若 $Xy=\lambda y$，$y\neq 0$，则
+\[
+y^TXy=\lambda\, y^Ty.
+\]
+当 $\|y\|_2=1$ 时，$\lambda=y^TXy$。因此
+\[
+\lambda_{\max}(X)=\sup_{\|y\|_2=1}y^TXy
+=\sup_{y^Ty=1}y^TXy.
+\]
+由于对任意固定 $y$，$y^TXy$ 是关于 $X$ 的线性函数（从而为凸函数），故
+$f(X)$ 作为这些函数的点态上确界（supremum）为凸函数。
+\end{example}
+
+\begin{theorem}{复合函数的单调性保持规则}{preserve-composition-monotonicity}
+设 $g:\mathbb{R}^n\to\mathbb{R}^k$，$h:\mathbb{R}^k\to\mathbb{R}$，并定义
+\[
+f(x)=h(g(x))=h\bigl(g_1(x),\dots,g_k(x)\bigr).
+\]
+则常用保持性质（$h$ 的单调性按分量理解）如下：
+\begin{itemize}
+  \item $f$ 为凸函数：若每个 $g_i$ 凸，且 $h$ 凸并对每个分量非减；
+  \item $f$ 为凸函数：若每个 $g_i$ 凹，且 $h$ 凸并对每个分量非增；
+  \item $f$ 为凹函数：若每个 $g_i$ 凹，且 $h$ 凹并对每个分量非减；
+  \item $f$ 为凹函数：若每个 $g_i$ 凸，且 $h$ 凹并对每个分量非增。
+\end{itemize}
+\end{theorem}
+
+\begin{proof}
+以上结论可由一维情形的 Jensen 不等式与分量单调性逐项组合得到。核心是：先用
+$g_i$ 的凸/凹性比较中间点值，再由 $h$ 的单调性保持不等号方向，最后由 $h$ 的凸/凹性完成合并。
+\end{proof}
+
+\begin{example}{对数和的凹性}{composition-log-sum-concave}
+\[
+f(x)=\sum_{i=1}^m \log(g_i(x))
+\]
+在 $g_i(x)>0$ 且每个 $g_i$ 为凹函数时，$f$ 为凹函数（因为 $\log$ 凹且单调递增）。
+\end{example}
+
+\begin{theorem}{部分最小化保持凸性}{preserve-partial-minimization}
+若 $f(x,y)$ 关于 $(x,y)$ 为凸函数，且 $C$ 为凸集，定义
+\[
+g(x)=\inf_{y\in C} f(x,y),
+\]
+则 $g$ 为凸函数。其定义域可写为
+\[
+\operatorname{dom}g=\{x\mid \exists y\in C,\ (x,y)\in\operatorname{dom}f\}.
+\]
+\end{theorem}
+
+\begin{proof}
+任取 $x_1,x_2$ 与 $\theta\in[0,1]$。对任意 $\varepsilon>0$，取 $y_1,y_2\in C$ 使
+\[
+f(x_1,y_1)\le g(x_1)+\varepsilon,\qquad
+f(x_2,y_2)\le g(x_2)+\varepsilon.
+\]
+因 $C$ 凸，$\theta y_1+(1-\theta)y_2\in C$，故
+\[
+\begin{aligned}
+g(\theta x_1+(1-\theta)x_2)
+&\le f\bigl(\theta x_1+(1-\theta)x_2,\ \theta y_1+(1-\theta)y_2\bigr) \\
+&\le \theta f(x_1,y_1)+(1-\theta)f(x_2,y_2) \\
+&\le \theta g(x_1)+(1-\theta)g(x_2)+\varepsilon.
+\end{aligned}
+\]
+令 $\varepsilon\downarrow 0$ 即得凸性。
+\end{proof}
+
+\begin{theorem}{透视变换保持凸性/凹性}{preserve-perspective}
+透视映射 $p:\mathbb{R}^{n+1}\to\mathbb{R}^n$ 定义为
+\[
+p(z,t)=\frac{z}{t},\qquad t>0.
+\]
+对函数 $f:\mathbb{R}^n\to\mathbb{R}$，其透视函数定义为
+\[
+g(x,t)=t\,f\!\left(\frac{x}{t}\right),\qquad t>0,
+\]
+\[
+\operatorname{dom}g=\{(x,t)\mid t>0,\ x/t\in\operatorname{dom}f\}.
+\]
+若 $f$ 为凸函数，则 $g$ 为凸函数；若 $f$ 为凹函数，则 $g$ 为凹函数。
+\end{theorem}
+
+\begin{proof}
+可将透视函数视为凸函数在仿射约束下的“齐次化”形式。等价地，其上图满足
+\[
+\operatorname{epi}(g)=\{(x,t,s)\mid t>0,\ (x/t,s/t)\in \operatorname{epi}(f)\},
+\]
+该集合是凸集在线性映射与正比例缩放下的像，故保持凸性；凹性情形同理。
+\end{proof}
+
+\begin{example}{二次型的透视}{perspective-quadratic}
+若 $f(x)=x^Tx$，$\operatorname{dom}f=\mathbb{R}^n$，则
+\[
+g(x,t)=t\,f\!\left(\frac{x}{t}\right)
+=t\left(\frac{x}{t}\right)^T\left(\frac{x}{t}\right)
+=\frac{x^Tx}{t},\qquad t>0.
+\]
+\end{example}
+
+\begin{example}{负对数函数的透视}{perspective-negative-log}
+设
+\[
+f(x)=-\log x,\qquad \operatorname{dom}f=\mathbb{R}_{++},
+\]
+则 $f$ 为凸函数。其透视函数为
+\[
+g(x,t)=t\,f\!\left(\frac{x}{t}\right)
+=-t\log\!\left(\frac{x}{t}\right)
+=-t\log x+t\log t,\qquad t>0.
+\]
+定义域为
+\[
+\operatorname{dom}g=\mathbb{R}_{++}^2,
+\]
+并且 $g$ 仍为凸函数。
+\end{example}
+
+\begin{example}{KL 散度与 Bregman 散度}{perspective-kl-bregman}
+设 $u,v\in\mathbb{R}_{++}^n$，定义
+\[
+g(u,v)=\sum_{i=1}^n u_i\log\frac{u_i}{v_i}.
+\]
+该例子可直接基于上一个“负对数函数的透视”得到：上一例中
+\[
+\phi(x,t)=-t\log\!\left(\frac{x}{t}\right)
+\]
+在 $(x,t)\in\mathbb{R}_{++}^2$ 上为凸函数。令 $x=v_i,\ t=u_i$，则
+\[
+\phi(v_i,u_i)=u_i\log\frac{u_i}{v_i}.
+\]
+于是
+\[
+g(u,v)=\sum_{i=1}^n \phi(v_i,u_i),
+\]
+是凸函数的有限和，因此关于 $(u,v)$ 仍为凸函数。
+
+更一般地，若 $f:\mathbb{R}^n\to\mathbb{R}$ 为凸且可微，则 Bregman 散度
+\[
+D_B(u,v)=f(u)-f(v)-\nabla f(v)^T(u-v)
+\]
+给出一类重要“距离型”函数。特别地，当
+\[
+f(u)=\sum_{i=1}^n u_i\log u_i
+\]
+时，
+\[
+D_B(u,v)=\sum_{i=1}^n\!\left(u_i\log\frac{u_i}{v_i}-u_i+v_i\right),
+\]
+即广义 KL 散度（与 $\sum_i u_i\log(u_i/v_i)$ 相差线性项）。
+\end{example}
+
+\section{共轭函数（The Conjugate Function）}
+
+\begin{definition}{共轭函数}{conjugate-definition}
+设 $f:\mathbb{R}^n\to\mathbb{R}\cup\{+\infty\}$，其共轭函数（conjugate function）定义为
+\[
+f^*(y)=\sup_{x\in\operatorname{dom}f}\bigl(y^T x-f(x)\bigr),\qquad y\in\mathbb{R}^n.
+\]
+\end{definition}
+
+\begin{theorem}{可微情形的一阶最优条件}{conjugate-first-order}
+若 $f$ 可微，且在给定 $y$ 下上式的上确界由某点 $x^\star$ 取得，则必有
+\[
+\nabla f(x^\star)=y.
+\]
+\end{theorem}
+
+\begin{proof}
+固定 $y$，考虑函数
+\[
+\phi_y(x)=y^Tx-f(x).
+\]
+若 $x^\star$ 是其极大点，则一阶必要条件为 $\nabla\phi_y(x^\star)=0$，即
+\[
+y-\nabla f(x^\star)=0.
+\]
+故 $\nabla f(x^\star)=y$。
+\end{proof}
+
+\begin{theorem}{共轭函数的凸性}{conjugate-convexity}
+无论 $f$ 是否凸，$f^*$ 关于 $y$ 总是凸函数。
+\end{theorem}
+
+\begin{proof}
+对任意固定 $x$，函数 $y\mapsto y^Tx-f(x)$ 是 $y$ 的仿射函数。$f^*(y)$ 是这一族仿射函数对 $x$ 取上确界，因此为凸函数。
+\end{proof}
+
+\begin{example}{仿射函数的共轭}{conjugate-affine}
+设 $f(x)=ax+b$，$\operatorname{dom}f=\mathbb{R}$，则
+\[
+f^*(y)=\sup_x\bigl(yx-ax-b\bigr)
+=\sup_x\bigl((y-a)x-b\bigr).
+\]
+只有当 $y=a$ 时上确界有界，否则为 $+\infty$。因此
+\[
+f^*(y)=
+\begin{cases}
+-b, & y=a,\\
++\infty, & y\neq a.
+\end{cases}
+\]
+定义域为单点集，故 $f^*$ 为凸函数。
+\end{example}
+
+\begin{example}{负对数函数的共轭}{conjugate-neg-log}
+设 $f(x)=-\log x$，$\operatorname{dom}f=\mathbb{R}_{++}$，则
+\[
+f^*(y)=\sup_{x>0}\bigl(yx+\log x\bigr).
+\]
+对 $x$ 求导得 $y+1/x=0$，故 $x^*=-1/y$（要求 $y<0$）。代入得
+\[
+f^*(y)=y\cdot(-1/y)+\log(-1/y)=-1-\log(-y),\qquad y<0.
+\]
+当 $y\ge0$ 时，$yx+\log x$ 在 $x>0$ 上无上界，故
+\[
+f^*(y)=
+\begin{cases}
+-1-\log(-y), & y<0,\\
++\infty, & y\ge0.
+\end{cases}
+\]
+\end{example}
+
+\begin{example}{二次函数的共轭}{conjugate-quadratic}
+设
+\[
+f(x)=\frac12 x^T\alpha x,\qquad
+\alpha\in\mathbb{S}_{++}^n,\qquad
+\operatorname{dom}f=\mathbb{R}^n.
+\]
+则
+\[
+f^*(y)=\sup_x\Bigl(y^Tx-\frac12 x^T\alpha x\Bigr).
+\]
+令梯度为零：$y-\alpha x=0$，得 $x^*=\alpha^{-1}y$。代入得
+\[
+\begin{aligned}
+f^*(y)
+&=y^T(\alpha^{-1}y)-\frac12(\alpha^{-1}y)^T\alpha(\alpha^{-1}y)\\
+&=y^T\alpha^{-1}y-\frac12 y^T\alpha^{-1}y\\
+&=\frac12 y^T\alpha^{-1}y.
+\end{aligned}
+\]
+因 $\alpha\succ0$，故 $\alpha^{-1}\succ0$，从而 $f^*(y)=\frac12 y^T\alpha^{-1}y$ 为凸函数（二次型）。
+\end{example}
+
+\section{次水平集（Sublevel set）}\label{sec:ch3-sublevel}
+
+\begin{definition}{次水平集与超水平集}{quasi-sublevel-def}
+对函数 $f:\mathbb{R}^n\to\mathbb{R}\cup\{\pm\infty\}$ 与实数 $\alpha$，
+其 $\alpha$-\textup{次水平集}与 $\alpha$-\textup{超水平集}分别定义为
+\[
+\sublevel{f}{\alpha}
+=
+\{x\in\operatorname{dom}f\mid f(x)\le \alpha\},
+\qquad
+\suplevel{f}{\alpha}
+=
+\{x\in\operatorname{dom}f\mid f(x)\ge \alpha\}.
+\]
+\end{definition}
+
+\begin{theorem}{次水平集的基本性质}{sublevel-basic-property}
+设 $\operatorname{dom}f$ 为凸集。若 $f$ 是凸函数，则对任意实数 $\alpha$，其
+$\alpha$-次水平集
+\[
+\sublevel{f}{\alpha}
+=
+\{x\in \operatorname{dom}f\mid f(x)\le \alpha\}
+\]
+均为凸集。
+\end{theorem}
+
+\begin{remark}{逆命题不成立}{sublevel-basic-converse-false}
+上述命题的逆命题一般不成立：存在不是凸函数的 $f$，但其所有
+$\alpha$-次水平集 $\sublevel{f}{\alpha}$ 均为凸集。这样的函数称为拟凸函数
+（quasi-convex）。
+（拟凸函数的正式定义见定义 37，其 Jensen 形式的等价刻画见定理 39。）
+\end{remark}
+
+\section{拟凸函数}\label{sec:ch3-quasiconvex}
+
+\begin{definition}{拟凸、拟凹与拟线性}{quasi-convex-concave-linear-def}
+设 $\operatorname{dom}f$ 为凸集。
+\begin{itemize}
+  \item 若对任意实数 $\alpha$，$\sublevel{f}{\alpha}$ 均为凸集，则称 $f$ 为\textbf{拟凸}（quasi-convex）。
+  \item 若对任意实数 $\alpha$，$\suplevel{f}{\alpha}$ 均为凸集，则称 $f$ 为\textbf{拟凹}（quasi-concave）。
+  \item 若同时拟凸且拟凹，则称 $f$ 为\textbf{拟线性}（quasi-linear）。
+\end{itemize}
+拟凸的 Jensen 形等价判据见下一个定理。
+\end{definition}
+
+\begin{theorem}{拟凸的 Jensen 形等价判据}{quasi-criterion-theorem}
+$f$ 是拟凸的当且仅当：对所有 $x,y\in\operatorname{dom}f$ 与
+$\theta\in[0,1]$，有
+\[
+f\bigl(\theta x+(1-\theta)y\bigr)
+\le
+\max\{f(x),f(y)\}.
+\]
+\end{theorem}
+
+\begin{example}{分式线性（线性分数）函数的次水平集}{quasi-example-linear-fractional}
+设
+\[
+f(x)=\frac{a^T x+b}{c^T x+d},\qquad
+\operatorname{dom}f=\{x\mid c^T x+d>0\}.
+\]
+对任意实数 $\alpha$，次水平集为
+\[
+S_\alpha
+=
+\sublevel{f}{\alpha}
+=\Bigl\{
+x\in\operatorname{dom}f\ \Big|\
+a^T x+b\le \alpha\bigl(c^T x+d\bigr)
+\Bigr\}
+\]
+上式可改写为线性不等式
+\[
+(a^Tx+b)-\alpha(c^Tx+d)\le 0.
+\]
+与 $c^Tx+d>0$ 的交集，因此 $S_\alpha$ 是一个多面体（polyhedron）。
+由于多面体一定是凸集，故对任意固定 $\alpha$，$S_\alpha$ 是凸集。
+从而分式线性函数在其定义域上是拟凸的
+（quasi-convex）。
+（常见特例：当 $c=0$ 时，$f(x)$ 为仿射函数，自然也是拟凸的。）
+\end{example}
+
+\begin{theorem}{一阶判别（可微时）}{quasi-diff-criteria}
+设 $\operatorname{dom}f$ 为开凸集，$f$ 一阶可微。
+\begin{enumerate}[label={(\alph*)}, leftmargin=2.2em]
+  \item \textup{（凸，一阶）\ }
+  $f$ 为凸的充要条件是对任意 $x,y\in\operatorname{dom}f$ 有
+  \[
+  f(y)\ge f(x)+\nabla f(x)^T(y-x).
+  \]
+  \item \textup{（拟凸，一阶）\ }
+  $f$ 为拟凸的充要条件是对任意 $x,y\in\operatorname{dom}f$ 有
+  \[
+  f(y)\le f(x)\ \Longrightarrow\ \nabla f(x)^T(y-x)\le 0.
+  \]
+\end{enumerate}
+\end{theorem}
+
+\begin{theorem}{二阶判别（二阶可微时）}{quasi-second-order-criteria}
+设 $\operatorname{dom}f$ 为开凸集，$f$ 二阶可微。
+\begin{enumerate}[label={(\alph*)}, leftmargin=2.2em]
+  \item \textup{（凸，二阶）\ }
+  $f$ 为凸的充要条件是对所有 $x\in\operatorname{dom}f$ 有
+  \[
+  \nabla^2 f(x)\succeq 0.
+  \]
+  \item \textup{（拟凸，二阶，必要条件）\ }
+  若 $f$ 为拟凸，则对所有 $x$ 和 $y$ 有
+  \[
+  y^T\nabla f(x)=0\ \Longrightarrow\ y^T \nabla^2 f(x)\, y\ge0.
+  \]
+\end{enumerate}
+\end{theorem}
+
+\begin{example}{``最后一个非零分量下标''函数与拟凸性}{last-nonzero-index-quasiconvex}
+对 $x\in\mathbb{R}^n$ 定义
+\[
+\ell(x)=
+\begin{cases}
+0, & x=0,\\
+\max\bigl\{\,i\mid x_i\neq0\,\bigr\}, & x\neq0.
+\end{cases}
+\]
+对任意 $k=0,1,\dots,n$，其次水平集为
+\[
+C_k^-(\ell)=\bigl\{x\in\mathbb{R}^n\mid \ell(x)\le k\bigr\}.
+\]
+\begin{itemize}
+  \item 当 $k=0$ 时，$C_0^-(\ell)=\{0\}$；
+  \item 当 $k=n$ 时，$C_n^-(\ell)=\mathbb{R}^n$；
+  \item 当 $0<k<n$ 时，$C_k^-(\ell)$ 是“最后 $n-k$ 个分量均为零”的坐标子空间。
+\end{itemize}
+坐标子空间是凸集，因此对任意 $k$，$C_k^-(\ell)$ 均为凸集，故 $\ell(x)$ 是
+\textbf{拟凸函数}（quasi-convex）。
+
+然而 $\ell(x)$ 一般不是凸函数。例如在 $n=2$ 中，取
+$x=(1,0)^T$，$y=(0,1)^T$，则
+\[
+\ell(x)=1,\quad \ell(y)=2,\quad
+\ell\!\Bigl(\frac{x+y}{2}\Bigr)=2>\frac{\ell(x)+\ell(y)}{2}=1.5.
+\]
+即凸组合的中点函数值反而更大，违背凸函数的 Jensen 不等式。
+\end{example}
+
+\section{对数凸与对数凹}\label{sec:ch3-logconvex}
+
+\begin{definition}{对数凸与对数凹}{logconvex-def-theorem}
+设 $f$ 在凸域上恒正。
+\begin{itemize}
+  \item 若 $g(x)=\log f(x)$ 为凸函数，则 $f$ 为\textbf{对数凸}（log-convex）。
+  \item 若 $g(x)=\log f(x)$ 为凹函数，则 $f$ 为\textbf{对数凹}（log-concave）。
+\end{itemize}
+\end{definition}
+
+\begin{remark}{基本性质}{logconvex-basic-property}
+若 $f$ 为对数凸函数，则 $f$ 一定也是凸函数。
+若 $f$ 为凹函数，则 $f$ 一定为对数凹函数。
+\end{remark}
+
+\end{document}
