@@ -15,7 +15,7 @@
 │   ├── chapter3_convex_functions_notes.pdf
 │   └── chapter4_convex_optimization_notes.pdf
 ├── assets/                               # 笔记中引用的图片素材
-├── template/                             # 笔记模板（来自 deep_generative_model）
+├── template/                             # 笔记模板（改编自 manifold_optimization_study_notes_chinese）
 ├── Convex Optimization By StephenBoyd/   # 参考书、课件与题解 PDF
 └── README.md
 ```
@@ -23,7 +23,7 @@
 - **`src/`** 只放可编辑的 LaTeX 源码；不要在这里留下编译产物。
 - **`pdf/`** 只放从 `src/` 编译出来的最终 PDF；不要手动把参考书 PDF 放进来。
 - **`assets/`** 放笔记需要的插图；源码中引用时使用相对路径 `../assets/...`。
-- **`template/`** 放笔记模板，来自 [`fanzuituanhuo/deep_generative_model`](https://github.com/fanzuituanhuo/deep_generative_model)；新增章节时可参考 `template/main.tex` 的样式。
+- **`template/`** 放笔记模板，样式改编自 [`Polaris-Aeterna/manifold_optimization_study_notes_chinese`](https://github.com/Polaris-Aeterna/manifold_optimization_study_notes_chinese)；新增章节时可参考 `template/main.tex` 的样式。
 - **`Convex Optimization By StephenBoyd/`** 放外部参考材料（教材、幻灯片、题解），不纳入编译流程。
 
 ## 环境要求

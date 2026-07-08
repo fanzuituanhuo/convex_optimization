@@ -13,7 +13,7 @@
 | `src/` | LaTeX 源码 | 可编辑；不要留 `.aux/.log/.out/.pdf` 等编译产物 |
 | `pdf/` | 编译生成的笔记 PDF | 只放从 `src/` 编译出来的 PDF；不要放参考 PDF |
 | `assets/` | 笔记引用的图片 | 源码中引用路径为 `../assets/文件名` |
-| `template/` | 笔记模板（从 deep_generative_model 同步） | 可编辑；更新后同步到仓库 |
+| `template/` | 笔记模板（改编自 manifold_optimization_study_notes_chinese） | 可编辑；更新后同步到仓库 |
 | `Convex Optimization By StephenBoyd/` | 外部参考 PDF（教材、课件、题解） | 只读；不要修改或删除 |
 
 ## 编译流程
@@ -47,7 +47,7 @@ xelatex -interaction=nonstopmode -output-directory=../pdf chapterN_xxx_notes.tex
    - 若移动或重命名大文件，注意 Git 会记录为删除+新增，尽量一次性完成。
 
 4. **模板文件**
-   - `template/` 目录来自 `https://github.com/fanzuituanhuo/deep_generative_model`，包含 `main.tex`、`ref.bib` 及图片素材。
+   - `template/` 目录样式改编自 `https://github.com/Polaris-Aeterna/manifold_optimization_study_notes_chinese`，包含 `main.tex`、`ref.bib` 及图片素材。
    - 章节笔记不再依赖 `template.zip`；如需参考模板样式，直接查看 `template/main.tex`。
 
 ## 修改建议
